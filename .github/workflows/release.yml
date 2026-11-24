@@ -23,7 +23,10 @@ jobs:
         with:
           node-version: '22'
           registry-url: https://registry.npmjs.org
-          cache: npm
+          # No `cache: npm`: it requires a lock file, and this package has none
+          # because its install is --legacy-peer-deps over conflicting optional
+          # expo-* peers. A cache miss costs seconds; a missing lock file is a
+          # hard failure before the first step that matters.
       - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npm run typecheck --if-present
       - run: npm test
