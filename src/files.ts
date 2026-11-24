@@ -22,8 +22,6 @@ const MIME: Record<ExportFormat, string> = {
   mp4: 'video/mp4',
   mkv: 'video/x-matroska',
   mov: 'video/quicktime',
-  gif: 'image/gif',
-  png: 'image/png',
 };
 
 /** The container extension for a format. `mkv` is not its own mime guess. */
@@ -85,3 +83,19 @@ export function isSupportedSource(uriOrName: string): boolean {
   const lower = uriOrName.toLowerCase().split('?')[0] ?? '';
   return /\.(mp4|mov|m4v|webm|mkv|avi|zip|png|jpe?g|gif|json)$/.test(lower);
 }
+
+/**
+ * How a file gets from the editor to the app. The server render is uploaded by
+ * the WebView to the app's own storage (`uploadUrl`); the app fetches it back
+ * over https. A `blob:` URI is readable only inside the WebView, so it is
+ * refused with the fix rather than failing as a decode error.
+ */
+export function savePlan(source: string): 'download' | 'decode' {
+  if (source.startsWith('https:')) return 'download';
+  if (source.startsWith('data:')) return 'decode';
+  if (source.startsWith('blob:')) {
+    throw new Error('A blob: URI is readable only inside the WebView. Export with { uploadUrl } and pass the URL of the uploaded file.');
+  }
+  throw new Error('Pass the https URL of the uploaded export.');
+}
+

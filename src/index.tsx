@@ -8,9 +8,9 @@
  */
 import { useCallback } from 'react';
 import type { RefObject } from 'react';
-import type { ExportFormat, ExportResult } from '@snappedcut/canvas-react-native';
+import type { ExportFormat } from '@snappedcut/canvas-react-native';
 
-import { decodeDataUri, exportFilename, isSupportedSource, mimeFor } from './files.js';
+import { decodeDataUri, exportFilename, isSupportedSource, mimeFor, savePlan } from './files.js';
 import {
   importOrExplain,
   type DocumentPickerModule,
@@ -76,39 +76,45 @@ export async function pickProject(): Promise<string | null> {
 /**
  * Write an export to the app's document directory and return its file URI.
  *
- * The export arrives as a data URI because a WebView cannot hand a native app a
- * Blob, so this is the step that turns it into a real file.
+ * `source` is where the export now is: the https URL of the file the WebView
+ * uploaded to your storage with `export(format, { uploadUrl })` (a GET URL for
+ * the same object), or a `data:` URI.
  */
 export async function saveExport(
-  result: ExportResult,
+  source: string,
+  format: ExportFormat,
   options: { filename?: string } = {},
 ): Promise<string> {
   const fs = await importOrExplain<FileSystemModule>('expo-file-system');
-
-  const { base64 } = decodeDataUri(result.uri);
-  const name = options.filename ?? exportFilename(result.format);
+  const plan = savePlan(source);
+  const name = options.filename ?? exportFilename(format);
   const directory = fs.documentDirectory ?? fs.cacheDirectory;
   if (!directory) throw new Error('This platform has no writable directory.');
 
   const uri = `${directory}${name}`;
-  await fs.writeAsStringAsync(uri, base64, { encoding: fs.EncodingType.Base64 });
+  if (plan === 'download') {
+    const done = await fs.downloadAsync(source, uri);
+    if (done.status < 200 || done.status >= 300) throw new Error(`The export could not be fetched: ${done.status}.`);
+  } else {
+    await fs.writeAsStringAsync(uri, decodeDataUri(source).base64, { encoding: fs.EncodingType.Base64 });
+  }
   return uri;
 }
 
 /** Save an export, then offer it to the share sheet. */
-export async function shareExport(result: ExportResult): Promise<string> {
-  const uri = await saveExport(result);
+export async function shareExport(source: string, format: ExportFormat): Promise<string> {
+  const uri = await saveExport(source, format);
   const sharing = await importOrExplain<SharingModule>('expo-sharing');
 
   if (await sharing.isAvailableAsync()) {
-    await sharing.shareAsync(uri, { mimeType: mimeFor(result.format) });
+    await sharing.shareAsync(uri, { mimeType: mimeFor(format) });
   }
   return uri;
 }
 
 /** Save an export into the device's camera roll. */
-export async function saveExportToLibrary(result: ExportResult): Promise<string> {
-  const uri = await saveExport(result);
+export async function saveExportToLibrary(source: string, format: ExportFormat): Promise<string> {
+  const uri = await saveExport(source, format);
   const library = await importOrExplain<MediaLibraryModule>('expo-media-library');
 
   const granted = await library.requestPermissionsAsync();

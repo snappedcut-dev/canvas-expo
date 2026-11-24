@@ -37,6 +37,7 @@ export type FileSystemModule = {
     contents: string,
     options?: { encoding?: string },
   ): Promise<void>;
+  downloadAsync(url: string, fileUri: string): Promise<{ uri: string; status: number }>;
 };
 
 export type SharingModule = {

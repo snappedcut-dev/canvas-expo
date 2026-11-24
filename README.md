@@ -21,19 +21,22 @@ import {
   type SnappedCutCanvasHandle,
 } from '@snappedcut/canvas-expo';
 
-export default function Editor() {
+export default function Editor({ token }: { token: string }) {
   const canvas = useRef<SnappedCutCanvasHandle>(null);
   const pick = useVideoPicker(canvas);
 
+  const exportAndShare = async () => {
+    // Your server presigns a PUT and a GET for one object in your bucket.
+    const { putUrl, getUrl } = await fetch('https://example.com/api/upload-slot').then((r) => r.json());
+    await canvas.current?.export('mp4', { uploadUrl: putUrl });
+    await shareExport(getUrl, 'mp4');
+  };
+
   return (
     <View style={{ flex: 1 }}>
-      <SnappedCutCanvas
-        ref={canvas}
-        publishableKey="pk_live_..."
-        onExport={(result) => shareExport(result)}
-      />
+      <SnappedCutCanvas ref={canvas} publishableKey="pk_live_..." token={token} />
       <Button title="Pick a video" onPress={pick} />
-      <Button title="Export" onPress={() => canvas.current?.export('mp4')} />
+      <Button title="Export" onPress={exportAndShare} />
     </View>
   );
 }
@@ -48,9 +51,9 @@ and re-exported here unchanged. What this package adds:
 | `pickVideo()` | Media-library picker. `null` if declined or cancelled. |
 | `pickProject()` | Document picker, refusing anything the editor cannot open. |
 | `useVideoPicker(ref)` | Pick a video and load it, in one callback. |
-| `saveExport(result, { filename? })` | Write an export to the app's documents. Returns the file URI. |
-| `shareExport(result)` | Save, then open the share sheet. |
-| `saveExportToLibrary(result)` | Save into the camera roll. |
+| `saveExport(url, format, { filename? })` | Download an uploaded export (its https URL) into the app's documents. Returns the file URI. |
+| `shareExport(url, format)` | Save, then open the share sheet. |
+| `saveExportToLibrary(url, format)` | Save into the camera roll. |
 
 ## Why the save path is its own module
 
@@ -81,16 +84,10 @@ a path inside `node_modules`.
 
 ## Where the processing runs
 
-**Today it runs inside the WebView, on the device**, on WebCodecs — a clip the
-user picks never leaves the phone. Nothing is added to your app binary, but the
-WebView does fetch the editor on first mount, so it needs a connection. Encoding
-is work the phone does: expect heat, battery and a slower export on low-end
-Android, and show progress from `onJob`.
-
-**Cloud render** is the one path that uploads anything, and it is opt-in. It is
-also the only metered one — on-device editing costs no credits.
-
-Moving the processing server-side is the committed direction, but it is not what
-this version does. Read this against the version you installed.
+Editing runs in the WebView, on the device. **`export` renders on Snapped
+Cut's servers**, billed to the token's session. Export with `{ uploadUrl }` so
+that the WebView uploads the file to your storage. Then pass its https URL to
+`saveExport`, `shareExport` or `saveExportToLibrary`. A `blob:` URI from an
+export without `uploadUrl` is readable only inside the WebView.
 
 MIT

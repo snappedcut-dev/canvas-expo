@@ -42,7 +42,7 @@ test('a data URI with no mime type still decodes to a default', () => {
 });
 
 test('every format has a mime type and an extension', () => {
-  for (const format of ['webm', 'mp4', 'mkv', 'mov', 'gif', 'png']) {
+  for (const format of ['webm', 'mp4', 'mkv', 'mov']) {
     assert.match(mimeFor(format), /^(video|image)\//, format);
     assert.equal(extensionFor(format), format);
   }
@@ -72,4 +72,12 @@ test('supported sources are recognised, and query strings do not fool it', () =>
   for (const bad of ['notes.txt', 'archive.tar.gz', 'script.sh', 'clip.mp4.exe', '']) {
     assert.equal(isSupportedSource(bad), false, bad);
   }
+});
+
+test('an uploaded export is downloaded, a blob: URI is refused with the fix', async () => {
+  const { savePlan } = await import('../dist/files.js');
+  assert.equal(savePlan('https://bucket.example/out.mp4?sig=1'), 'download');
+  assert.equal(savePlan('data:video/mp4;base64,AA'), 'decode');
+  assert.throws(() => savePlan('blob:https://snappedcut.com/abc'), /uploadUrl/);
+  assert.throws(() => savePlan('file:///x.mp4'), /https URL/);
 });

@@ -3,6 +3,24 @@
 Every release is tagged and published from CI with npm provenance. Versions
 follow semver; the embed protocol has its own version in the `ready` event.
 
+## 0.2.0 - 2026-11-24
+
+### Fixed
+
+- **`saveExport` failed on every export.** It decoded a `data:` URI, but the
+  editor now hands back a `blob:` URI, which only the WebView can read.
+  Export with `{ uploadUrl }` instead, then pass the uploaded file's https
+  URL: `saveExport(url, format)`, `shareExport(url, format)` and
+  `saveExportToLibrary(url, format)` download it. A `blob:` URI is refused with
+  that fix in the error message.
+
+### Changed
+
+- Requires `@snappedcut/canvas-react-native` ^0.2.0, which adds features,
+  the full theme set, `setTheme`, `uploadUrl` and the new error codes.
+- `gif` and `png` were removed. The server renders `mp4`, `webm`, `mov` and
+  `mkv`.
+
 ## 0.1.1 - 2026-11-24
 
 ### Fixed

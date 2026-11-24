@@ -1,6 +1,6 @@
 {
   "name": "@snappedcut/canvas-expo",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "The Snapped Cut video editor in an Expo app: the canvas plus the pickers.",
   "license": "MIT",
   "type": "module",
@@ -46,7 +46,7 @@
     "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@snappedcut/canvas-react-native": "^0.1.0"
+    "@snappedcut/canvas-react-native": "^0.2.0"
   },
   "peerDependencies": {
     "expo": ">=51",
