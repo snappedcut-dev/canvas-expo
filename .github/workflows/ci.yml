@@ -20,11 +20,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      # Until @snappedcut/canvas-react-native is on npm, take it from its own
-      # repo. package.json keeps the real `^0.1.0` range — only this checkout is
-      # redirected — so the published tarball is never wrong. Delete after release.
-      - name: Resolve the canvas from its repo
-        run: npm pkg set "dependencies.@snappedcut/canvas-react-native=github:snappedcut-dev/canvas-react-native"
       # --legacy-peer-deps: the optional expo-* peers conflict with each other
       # under npm's strict resolver, and none of them is needed to compile or
       # test — they are loaded lazily, by name, at runtime.
