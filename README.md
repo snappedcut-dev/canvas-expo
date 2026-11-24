@@ -79,11 +79,11 @@ an app that only loads projects from its own server never installs a picker.
 A missing one fails with the command to run rather than a bundler trace naming
 a path inside `node_modules`.
 
-## The editing happens on the handset
+## The processing happens on our servers
 
-Decode, cut, filter and encode are WebCodecs calls **inside the WebView**. So
-`load` and `export` need no network once the view is up, and the footage never
-leaves the device. The one exception is a **cloud render**, which is opt-in,
-costs credits, and reports itself through `onJob`.
+Decode, compositing and encode all run on Snapped Cut's machines, not in the
+WebView — so no engine code reaches the device and nothing heavy joins your
+bundle. `load` and `export` are round trips, and each reports itself through
+`onJob` with the credits it cost, so you can meter per customer.
 
 MIT
